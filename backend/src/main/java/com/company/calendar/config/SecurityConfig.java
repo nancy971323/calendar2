@@ -44,7 +44,7 @@ public class SecurityConfig {
     static {
         org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
             new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        System.out.println("加密後的密碼123: " + encoder.encode("123"));
+        System.out.println("加密後的密碼123456: " + encoder.encode("123456"));
     }
     
     /**
