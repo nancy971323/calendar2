@@ -8,6 +8,7 @@
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/controller/CalendarController.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/repository/EmployeeRepository.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/dto/EmployeeDTO.java
+/Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/service/home/HomeService.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/service/calendar/CalendarServiceImpl.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/dto/LoginDTO.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/model/Employee.java
@@ -23,4 +24,5 @@
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/controller/HomeController.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/model/Event.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/service/employee/EmployeeServiceImpl.java
+/Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/service/home/HomeServiceImpl.java
 /Users/lidiannan/Documents/GitHub/calendar2/backend/src/main/java/com/company/calendar/enums/SecurityLevel.java

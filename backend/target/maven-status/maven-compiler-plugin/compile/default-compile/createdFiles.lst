@@ -1,3 +1,4 @@
+com/company/calendar/service/home/HomeService.class
 com/company/calendar/service/auth/AuthServiceImpl.class
 com/company/calendar/service/employee/EmployeeServiceImpl.class
 com/company/calendar/dto/EmployeeDTO.class
@@ -20,6 +21,7 @@ com/company/calendar/model/Employee.class
 com/company/calendar/service/auth/AuthService.class
 com/company/calendar/service/employee/EmployeeService.class
 com/company/calendar/model/EventViewPermission.class
+com/company/calendar/service/home/HomeServiceImpl.class
 com/company/calendar/repository/EventViewPermissionRepository.class
 com/company/calendar/controller/EmployeeController.class
 com/company/calendar/CalendarApplication.class
