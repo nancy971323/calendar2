@@ -41,7 +41,7 @@
           
           <div class="action-buttons">
             <Button v-if="isLoggedIn" @click="navigateToCalendar" label="前往行事曆" icon="pi pi-calendar" class="p-button-lg" />
-            <Button v-if="isLoggedIn" @click="navigateToAdmin" label="後台管理" icon="pi pi-cog" class="p-button-lg p-button-secondary" />
+            <Button v-if="isLoggedIn && hasHighestAuth" @click="navigateToAdmin" label="後台管理" icon="pi pi-cog" class="p-button-lg p-button-secondary" />
             <Button v-if="!isLoggedIn" @click="navigateToLogin" label="登入系統" icon="pi pi-sign-in" class="p-button-lg" />
           </div>
         </div>
@@ -63,6 +63,7 @@ export default {
     const router = useRouter()
     
     const isLoggedIn = computed(() => store.getters['auth/isAuthenticated'])
+    const hasHighestAuth = computed(() => store.getters['auth/hasHighestAuth'])
     
     // 導航方法
     const navigateToCalendar = () => {
@@ -79,6 +80,7 @@ export default {
     
     return {
       isLoggedIn,
+      hasHighestAuth,
       navigateToCalendar,
       navigateToAdmin,
       navigateToLogin

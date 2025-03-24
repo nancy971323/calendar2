@@ -71,6 +71,15 @@ router.beforeEach(async (to, from, next) => {
       if (token) {
         try {
           await store.dispatch('auth/checkAuth')
+          // 檢查最高權限要求
+          if (to.matched.some(record => record.meta.requiresHighestAuth)) {
+            const currentUser = store.getters['auth/currentUser']
+            if (!currentUser || currentUser.securityLevel !== 'LEVEL_1') {
+              // 用戶沒有最高權限，跳轉到首頁
+              next({ path: '/' })
+              return
+            }
+          }
           next() // 已驗證，繼續導航
           return
         } catch (error) {
@@ -85,6 +94,15 @@ router.beforeEach(async (to, from, next) => {
         query: { redirect: to.fullPath } // 保存原目標路徑
       })
     } else {
+      // 檢查最高權限要求
+      if (to.matched.some(record => record.meta.requiresHighestAuth)) {
+        const currentUser = store.getters['auth/currentUser']
+        if (!currentUser || currentUser.securityLevel !== 'LEVEL_1') {
+          // 用戶沒有最高權限，跳轉到首頁
+          next({ path: '/' })
+          return
+        }
+      }
       next() // 已登入，繼續導航
     }
   } else {

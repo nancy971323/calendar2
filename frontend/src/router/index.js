@@ -30,7 +30,8 @@ const routes = [
     name: 'Admin',
     component: AdminView,
     meta: {
-      requiresAuth: true
+      requiresAuth: true,
+      requiresHighestAuth: true
     }
   },
   {

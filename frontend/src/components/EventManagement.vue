@@ -335,10 +335,26 @@ export default {
     const securityLevelOptions = computed(() => {
       if (!securityLevels.value) return []
       
-      return Object.keys(securityLevels.value).map(level => ({
+      // 獲取所有安全等級
+      const allLevels = Object.keys(securityLevels.value).map(level => ({
         name: securityLevels.value[level].description,
         value: level
       }))
+      
+      // 如果沒有當前用戶或沒有安全等級，返回所有選項
+      if (!currentUser.value || !currentUser.value.securityLevel) return allLevels
+      
+      // 根據當前用戶安全等級過濾選項
+      // 安全等級數字越小權限越高
+      // LEVEL_1: 最高權限, LEVEL_2: 高級權限, LEVEL_3: 中級權限, LEVEL_4: 基本權限
+      return allLevels.filter(option => {
+        // 獲取選項等級的數字部分
+        const optionLevelNum = parseInt(option.value.split('_')[1])
+        // 獲取當前用戶等級的數字部分
+        const userLevelNum = parseInt(currentUser.value.securityLevel.split('_')[1])
+        // 只返回不高於當前用戶等級的選項（數字不小於用戶等級）
+        return optionLevelNum >= userLevelNum
+      })
     })
     
     // 計算屬性

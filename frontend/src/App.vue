@@ -11,7 +11,7 @@
           <div class="header-menu">
             <Button @click="$router.push('/')" label="首頁" icon="pi pi-home" class="p-button-text" />
             <Button @click="$router.push('/calendar')" label="行事曆" icon="pi pi-calendar" class="p-button-text" />
-            <Button v-if="isLoggedIn" @click="$router.push('/admin')" label="後臺管理" icon="pi pi-cog" class="p-button-text" />
+            <Button v-if="isLoggedIn && hasHighestAuth" @click="$router.push('/admin')" label="後臺管理" icon="pi pi-cog" class="p-button-text" />
           </div>
           <div class="header-user" v-if="isLoggedIn">
             <span class="user-info">{{ currentUser.fullName }} ({{ securityLevelText }})</span>
@@ -57,6 +57,10 @@ export default {
         default: return level
       }
     })
+    const hasHighestAuth = computed(() => {
+      if (!currentUser.value || !currentUser.value.securityLevel) return false
+      return currentUser.value.securityLevel === 'LEVEL_1'
+    })
 
     // 方法
     const logout = async () => {
@@ -86,6 +90,7 @@ export default {
       isLoggedIn,
       currentUser,
       securityLevelText,
+      hasHighestAuth,
       logout
     }
   }

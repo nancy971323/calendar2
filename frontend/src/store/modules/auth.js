@@ -17,7 +17,8 @@ import {
   const getters = {
     isAuthenticated: state => !!state.token && !!state.currentUser,
     currentUser: state => state.currentUser,
-    authError: state => state.error
+    authError: state => state.error,
+    hasHighestAuth: state => state.currentUser && state.currentUser.securityLevel === 'LEVEL_1'
   }
   
   // 動作

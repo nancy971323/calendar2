@@ -95,6 +95,9 @@ public class CalendarServiceImpl implements CalendarService {
         
         Employee creator = creatorOpt.get();
         
+        // 驗證安全等級 - 用戶不能選擇比自己等級高的安全等級
+        validateSecurityLevel(creator.getSecurityLevel(), eventDTO.getSecurityLevel());
+        
         Event event = eventDTO.toEntity(creator);
         event.setCreatedAt(LocalDateTime.now());
         event.setUpdatedAt(LocalDateTime.now());
@@ -128,6 +131,12 @@ public class CalendarServiceImpl implements CalendarService {
         }
         
         Event event = eventOpt.get();
+        
+        // 獲取事件的創建者
+        Employee creator = event.getCreator();
+        
+        // 驗證安全等級 - 用戶不能選擇比自己等級高的安全等級
+        validateSecurityLevel(creator.getSecurityLevel(), eventDTO.getSecurityLevel());
         
         // 更新事件基本信息
         event.setTitle(eventDTO.getTitle());
@@ -347,5 +356,24 @@ public class CalendarServiceImpl implements CalendarService {
         Employee employee = employeeOpt.get();
         
         return event.canBeViewedBy(employee);
+    }
+    
+    /**
+     * 驗證安全等級 - 確保用戶不能選擇比自己等級高的安全等級
+     * 
+     * @param userLevel 用戶的安全等級
+     * @param eventLevel 事件的安全等級
+     * @throws IllegalArgumentException 如果用戶嘗試選擇比自己等級高的安全等級
+     */
+    private void validateSecurityLevel(SecurityLevel userLevel, SecurityLevel eventLevel) {
+        // 安全等級數字越小，權限越高
+        // 用戶不能選擇比自己等級高的安全等級（即數字更小的等級）
+        if (eventLevel.getLevel() < userLevel.getLevel()) {
+            throw new IllegalArgumentException(
+                "無法設定比用戶本身更高的安全等級。用戶等級：" + 
+                userLevel.getDescription() + "，嘗試設定的等級：" + 
+                eventLevel.getDescription()
+            );
+        }
     }
 }
