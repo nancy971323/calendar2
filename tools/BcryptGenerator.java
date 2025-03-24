@@ -1,0 +1,1 @@
+public class BcryptGenerator { public static void main(String[] args) { String password = "admin123"; String encoded = org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.encode(password); System.out.println("Password: " + password); System.out.println("Encoded: " + encoded); } }

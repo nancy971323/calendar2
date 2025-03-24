@@ -1,0 +1,22 @@
+// 認證相關
+export const SET_CURRENT_USER = 'SET_CURRENT_USER'
+export const SET_AUTH_TOKEN = 'SET_AUTH_TOKEN'
+export const SET_AUTH_ERROR = 'SET_AUTH_ERROR'
+export const CLEAR_AUTH = 'CLEAR_AUTH'
+
+// 員工相關
+export const SET_EMPLOYEES = 'SET_EMPLOYEES'
+export const SET_EMPLOYEE = 'SET_EMPLOYEE'
+export const ADD_EMPLOYEE = 'ADD_EMPLOYEE'
+export const UPDATE_EMPLOYEE = 'UPDATE_EMPLOYEE'
+export const REMOVE_EMPLOYEE = 'REMOVE_EMPLOYEE'
+export const SET_SECURITY_LEVELS = 'SET_SECURITY_LEVELS'
+
+// 行事曆相關
+export const SET_EVENTS = 'SET_EVENTS'
+export const SET_EVENT = 'SET_EVENT'
+export const ADD_EVENT = 'ADD_EVENT'
+export const UPDATE_EVENT = 'UPDATE_EVENT'
+export const REMOVE_EVENT = 'REMOVE_EVENT'
+export const SET_CURRENT_DATE = 'SET_CURRENT_DATE'
+export const SET_EVENT_PERMISSIONS = 'SET_EVENT_PERMISSIONS'
