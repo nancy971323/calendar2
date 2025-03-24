@@ -26,4 +26,5 @@ com/company/calendar/repository/EventViewPermissionRepository.class
 com/company/calendar/controller/EmployeeController.class
 com/company/calendar/CalendarApplication.class
 com/company/calendar/repository/EventRepository.class
+com/company/calendar/util/PathUtil.class
 com/company/calendar/dto/LoginDTO.class

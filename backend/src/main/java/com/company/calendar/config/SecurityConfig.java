@@ -40,13 +40,6 @@ import java.util.Collections;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // 添加靜態代碼塊，啟動時生成密碼
-    static {
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
-            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        System.out.println("加密後的密碼123456: " + encoder.encode("123456"));
-    }
-    
     /**
      * 員工資料庫操作介面
      */
