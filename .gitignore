@@ -1,23 +1,21 @@
 # Node modules
- node_modules/
+node_modules/
  
- # Environment variables
- .env
+# Environment variables
+.env
  
- # IDE files
- .idea/
- .vscode/
+# IDE files
+.idea/
+.vscode/
  
- # Build files
- dist/
- build/
- target/
+# Build files
+dist/
+build/
+target/
  
- # Logs
- *.log
+# Logs
+*.log
  
- # Database backups
- database_backups/
- 
- # System files
- .DS_Store
+# Database backups
+database_backups/
+.DS_Store
