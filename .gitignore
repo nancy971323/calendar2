@@ -17,5 +17,4 @@ target/
 *.log
  
 # Database backups
-database_backups/
 .DS_Store
