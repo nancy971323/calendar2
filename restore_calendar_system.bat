@@ -15,6 +15,8 @@ if not exist "%BACKUP_FILE%" (
 
 REM 設置數據庫名稱
 set DB_NAME=calendar_system
+set DB_USER=root
+set DB_PASSWORD=123456
 
 REM 確認恢復操作
 echo 警告: 這將覆蓋 %DB_NAME% 數據庫的當前內容。
@@ -26,7 +28,7 @@ if /i not "%REPLY%"=="y" (
 
 REM 執行恢復操作
 echo 正在從 %BACKUP_FILE% 恢復 %DB_NAME% 數據庫...
-mysql -u root < "%BACKUP_FILE%"
+mysql -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% < "%BACKUP_FILE%"
 
 REM 檢查是否成功
 if %ERRORLEVEL% EQU 0 (

@@ -1,4 +1,5 @@
 @echo off
-echo 正在以Windows環境啟動Calendar System...
+chcp 65001
+echo [INFO] Starting Calendar System in Windows environment...
 cd backend
-mvn spring-boot:run -Dspring.profiles.active=windows 
+mvn spring-boot:run "-Dspring-boot.run.profiles=windows" 

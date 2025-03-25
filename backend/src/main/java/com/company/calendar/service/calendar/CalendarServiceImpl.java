@@ -4,6 +4,7 @@ import com.company.calendar.dto.EventDTO;
 import com.company.calendar.model.Employee;
 import com.company.calendar.model.Event;
 import com.company.calendar.model.EventViewPermission;
+import com.company.calendar.enums.SecurityLevel;
 import com.company.calendar.repository.EmployeeRepository;
 import com.company.calendar.repository.EventRepository;
 import com.company.calendar.repository.EventViewPermissionRepository;

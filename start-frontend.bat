@@ -1,5 +1,6 @@
 @echo off
-echo 正在啟動前端應用...
+chcp 65001
+echo [INFO] Starting frontend application...
 cd frontend
-npm install
-npm run serve 
+call npm install
+call npm run serve 
