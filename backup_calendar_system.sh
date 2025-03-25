@@ -11,7 +11,7 @@ mkdir -p ${BACKUP_DIR}
 
 # 執行備份
 echo "正在備份 ${DB_NAME} 數據庫到 ${BACKUP_FILE}..."
-mysqldump -u root --add-drop-table --routines --triggers --events ${DB_NAME} > ${BACKUP_FILE}
+mysqldump -u root --add-drop-table --databases ${DB_NAME} --routines --triggers --events > ${BACKUP_FILE}
 
 # 檢查備份是否成功
 if [ $? -eq 0 ]; then

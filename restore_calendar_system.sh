@@ -28,7 +28,7 @@ fi
 
 # 執行恢復操作
 echo "正在從 ${BACKUP_FILE} 恢復 ${DB_NAME} 數據庫..."
-mysql -u root ${DB_NAME} < ${BACKUP_FILE}
+mysql -u root < ${BACKUP_FILE}
 
 # 檢查是否成功
 if [ $? -eq 0 ]; then
