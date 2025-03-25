@@ -3,10 +3,16 @@ node_modules/
  
 # Environment variables
 .env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
  
 # IDE files
 .idea/
 .vscode/
+.metadata/
  
 # Build files
 dist/
@@ -15,6 +21,38 @@ target/
  
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
  
 # Database backups
 .DS_Store
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Dependency lock files (optional, based on needs)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Compiled language specific
+__pycache__/
+*.py[cod]
+*.class
+*.o
+*.obj
+
+# Cache directories
+.npm/
+.pnpm-store/
+.yarn/cache
+.yarn/unplugged
