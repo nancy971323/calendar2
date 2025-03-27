@@ -1,38 +1,81 @@
 #!/bin/bash
 
-# 檢查參數
+# Set backup directory
+BACKUP_DIR="database_backups"
+
+# Check parameters
 if [ "$#" -ne 1 ]; then
-  echo "用法: $0 <備份文件路徑>"
-  exit 1
+  echo "No backup file path provided, will use the latest backup file..."
+  
+  # Check if backup directory exists
+  if [ ! -d "${BACKUP_DIR}" ]; then
+    echo "Error: Backup directory ${BACKUP_DIR} not found"
+    echo "Creating backup directory..."
+    
+    mkdir -p "${BACKUP_DIR}" 2>/dev/null
+    
+    if [ $? -ne 0 ]; then
+      echo "Failed to create backup directory"
+      echo "Current directory: $(pwd)"
+      exit 1
+    else
+      echo "Backup directory created successfully"
+    fi
+    
+    echo "Please place backup files in the ${BACKUP_DIR} directory, then run this script again"
+    exit 1
+  fi
+  
+  # Find the latest SQL backup file
+  LATEST_BACKUP=$(ls -t "${BACKUP_DIR}"/*.sql 2>/dev/null | head -n 1)
+  
+  if [ -z "${LATEST_BACKUP}" ]; then
+    echo "Error: No .sql backup files found in ${BACKUP_DIR} directory"
+    exit 1
+  fi
+  
+  BACKUP_FILE="${LATEST_BACKUP}"
+  echo "Found latest backup file: ${BACKUP_FILE}"
+else
+  BACKUP_FILE=$1
 fi
 
-BACKUP_FILE=$1
-
-# 檢查文件是否存在
+# Check if file exists
 if [ ! -f "${BACKUP_FILE}" ]; then
-  echo "錯誤: 備份文件 ${BACKUP_FILE} 不存在"
+  echo "Error: Backup file ${BACKUP_FILE} does not exist"
   exit 1
 fi
 
-# 設置數據庫名稱
+# Set database name
 DB_NAME="calendar_system"
+DB_USER="root"
+DB_PASSWORD="123456"
 
-# 確認恢復操作
-echo "警告: 這將覆蓋 ${DB_NAME} 數據庫的當前內容。"
-read -p "是否繼續? (y/n): " -n 1 -r
+# Confirm restore operation
+echo "Warning: This will overwrite the current contents of the ${DB_NAME} database."
+read -p "Continue? (y/n): " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-  echo "操作已取消"
+  echo "Operation cancelled"
   exit 0
 fi
 
-# 執行恢復操作
-echo "正在從 ${BACKUP_FILE} 恢復 ${DB_NAME} 數據庫..."
-mysql -u root ${DB_NAME} < ${BACKUP_FILE}
-
-# 檢查是否成功
-if [ $? -eq 0 ]; then
-  echo "數據庫恢復成功！"
+# Perform restore operation
+echo "Restoring ${DB_NAME} database from ${BACKUP_FILE}..."
+if [ -z "${DB_PASSWORD}" ]; then
+  mysql -u ${DB_USER} ${DB_NAME} < "${BACKUP_FILE}"
 else
-  echo "數據庫恢復失敗！"
+  mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} < "${BACKUP_FILE}"
+fi
+
+# Check if successful
+if [ $? -eq 0 ]; then
+  echo "Database restore successful!"
+else
+  echo "Database restore failed!"
+  echo "Possible reasons:"
+  echo "- MySQL service is not running"
+  echo "- Database ${DB_NAME} does not exist"
+  echo "- Username or password is incorrect"
+  echo "- Invalid backup file format"
 fi
