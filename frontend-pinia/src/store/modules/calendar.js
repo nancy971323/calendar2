@@ -14,13 +14,17 @@ export const useCalendarStore = defineStore('calendar', {
   
   getters: {
     eventsByDate: (state) => (date) => {
+      if (!state.events || state.events.length === 0) return []
+      
       const dateStr = moment(date).format('YYYY-MM-DD')
       return state.events.filter(event => {
+        if (!event.startTime || !event.endTime) return false
+        
         const startDate = moment(event.startTime).format('YYYY-MM-DD')
         const endDate = moment(event.endTime).format('YYYY-MM-DD')
         
         // 檢查事件是否在指定日期當天或跨越該日期
-        return moment(dateStr).isBetween(startDate, endDate, null, '[]')
+        return moment(dateStr).isBetween(startDate, endDate, 'day', '[]')
       })
     },
     
@@ -84,7 +88,9 @@ export const useCalendarStore = defineStore('calendar', {
     // 獲取當月事件
     async fetchMonthEvents() {
       try {
+        console.log(`正在獲取 ${this.currentYear}年${this.currentMonth}月的事件`)
         const response = await api.get(`/api/calendar/events/visible/year/${this.currentYear}/month/${this.currentMonth}`)
+        console.log('API回應:', response.data)
         this.setEvents(response.data)
         return response.data
       } catch (error) {

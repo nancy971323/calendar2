@@ -279,14 +279,11 @@ export default {
       let day = calendarStart.clone()
       while (day.isSameOrBefore(calendarEnd)) {
         const isOtherMonth = day.month() !== monthStart.month()
-        const dayEvents = calendarStore.events.filter(event => {
-          const start = moment(event.startTime)
-          const end = moment(event.endTime)
-          return day.isBetween(start, end, 'day', '[]')
-        })
+        const dateStr = day.format('YYYY-MM-DD')
+        const dayEvents = calendarStore.eventsByDate(dateStr)
         
         days.push({
-          date: day.format('YYYY-MM-DD'),
+          date: dateStr,
           dayNumber: day.date(),
           isOtherMonth,
           isToday: day.isSame(moment(), 'day'),
@@ -445,15 +442,23 @@ export default {
       isLoading.value = true
       try {
         // 設置當前日期
-        calendarStore.setCurrentDate(selectedDate.value)
+        const currentDate = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-01`;
+        calendarStore.setCurrentDate(currentDate)
         
         // 加載本月事件
-        await updateEvents()
+        await calendarStore.fetchMonthEvents()
+        console.log('已載入的事件:', calendarStore.events)
         
         // 加載員工列表（用於事件共享）
         await employeeStore.fetchActiveEmployees()
       } catch (error) {
         console.error('加載日曆數據失敗:', error)
+        toast.add({
+          severity: 'error',
+          summary: '錯誤',
+          detail: '無法加載日曆數據',
+          life: 3000
+        })
       } finally {
         isLoading.value = false
       }
@@ -461,12 +466,12 @@ export default {
     
     // 監聽選中的月份變化
     watch(
-      () => ({ month: calendarStore.currentMonth, year: calendarStore.currentYear }),
-      async () => {
-        await updateEvents()
-      },
-      { deep: true }
-    )
+      [selectedMonth, selectedYear],
+      async ([newMonth, newYear]) => {
+        calendarStore.setCurrentDate(`${newYear}-${String(newMonth).padStart(2, '0')}-01`);
+        await updateEvents();
+      }
+    );
     
     // 加載安全等級
     const loadSecurityLevels = async () => {
@@ -776,14 +781,26 @@ export default {
     
     // 初始化
     onMounted(async () => {
-      // 加載安全等級
-      await loadSecurityLevels()
-      
-      // 加載員工列表
-      await loadEmployees()
-      
-      // 加載初始數據
-      await loadInitialData()
+      try {
+        console.log('Calendar 組件已掛載，開始加載數據')
+        
+        // 加載安全等級
+        await loadSecurityLevels()
+        
+        // 加載員工列表
+        await loadEmployees()
+        
+        // 加載初始數據
+        await loadInitialData()
+        
+        console.log('所有數據加載完成', {
+          events: calendarStore.events,
+          currentMonth: calendarStore.currentMonth,
+          currentYear: calendarStore.currentYear
+        })
+      } catch (error) {
+        console.error('初始化日曆失敗:', error)
+      }
     })
     
     return {
