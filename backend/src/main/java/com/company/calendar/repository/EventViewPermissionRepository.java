@@ -72,4 +72,13 @@ public interface EventViewPermissionRepository extends JpaRepository<EventViewPe
      * @return 如果有權限則返回true，否則返回false
      */
     boolean existsByEmployeeAndEvent(Employee employee, Event event);
+    
+    /**
+     * 根據事件和員工查找查看權限
+     * 
+     * @param event 事件
+     * @param employee 員工
+     * @return 查看權限，如果不存在則返回空
+     */
+    Optional<EventViewPermission> findByEventAndEmployee(Event event, Employee employee);
 }

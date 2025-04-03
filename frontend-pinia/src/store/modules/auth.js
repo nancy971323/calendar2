@@ -77,7 +77,7 @@ export const useAuthStore = defineStore('auth', {
       }
       
       try {
-        const response = await api.get('/api/auth/me')
+        const response = await api.get('/api/auth/current')
         this.setCurrentUser(response.data)
       } catch (error) {
         console.error('檢查身份驗證失敗:', error)

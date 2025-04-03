@@ -97,4 +97,21 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @return 匹配的事件列表
      */
     List<Event> findByTitleContainingOrDescriptionContaining(String keyword, String sameKeyword);
+    
+    /**
+     * 查找開始時間或結束時間在指定時間範圍內的所有事件
+     * 
+     * @param startTimeFrom 開始時間下限
+     * @param startTimeTo 開始時間上限
+     * @param endTimeFrom 結束時間下限
+     * @param endTimeTo 結束時間上限
+     * @return 時間範圍內的事件列表
+     */
+    @Query("SELECT e FROM Event e WHERE (e.startTime BETWEEN :startTimeFrom AND :startTimeTo) OR (e.endTime BETWEEN :endTimeFrom AND :endTimeTo)")
+    List<Event> findByStartTimeBetweenOrEndTimeBetween(
+        @Param("startTimeFrom") LocalDateTime startTimeFrom, 
+        @Param("startTimeTo") LocalDateTime startTimeTo,
+        @Param("endTimeFrom") LocalDateTime endTimeFrom, 
+        @Param("endTimeTo") LocalDateTime endTimeTo
+    );
 }

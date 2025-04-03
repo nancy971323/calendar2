@@ -1,6 +1,8 @@
 package com.company.calendar.model;
 
 import com.company.calendar.enums.SecurityLevel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -38,6 +40,7 @@ public class Employee {
     /**
      * 員工密碼，存儲加密後的密碼
      */
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -69,12 +72,14 @@ public class Employee {
     /**
      * 員工建立的事件集合
      */
+    @JsonManagedReference("employee-events")
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Event> createdEvents = new HashSet<>();
 
     /**
      * 員工被特別許可可查看的事件集合
      */
+    @JsonIgnore
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<EventViewPermission> eventViewPermissions = new HashSet<>();
 

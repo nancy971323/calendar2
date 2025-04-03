@@ -28,6 +28,10 @@
         <Dropdown v-model="filters.securityLevel" :options="securityLevelOptions" optionLabel="name" optionValue="value" placeholder="安全等級" @change="applyFilters" />
       </div>
       
+      <div class="filter-item">
+        <ToggleButton v-model="showAllEvents" onLabel="顯示全部事件" offLabel="僅顯示所選年月" @change="toggleShowAllEvents" />
+      </div>
+      
       <Button icon="pi pi-filter-slash" class="p-button-outlined" @click="resetFilters" />
     </div>
     
@@ -267,6 +271,9 @@ export default {
       searchText: ''
     })
     
+    // 是否顯示全部事件
+    const showAllEvents = ref(false)
+    
     // 根據篩選條件過濾事件
     const filteredEvents = computed(() => {
       let result = [...events.value]
@@ -434,8 +441,25 @@ export default {
     
     const canGrantSpecialPermissions = computed(() => !!currentUser.value)
     
+    // 應用篩選
+    const applyFilters = () => {
+      // 當搜尋關鍵字或安全等級發生變化時，不需要重新載入數據
+      if (filters.value.searchText || filters.value.securityLevel) {
+        return
+      }
+      
+      loadEvents()
+    }
+    
+    // 切換顯示全部事件或僅顯示所選年月事件
+    const toggleShowAllEvents = async () => {
+      console.log("切換顯示模式：", showAllEvents.value ? "全部事件" : "僅所選年月")
+      await loadEvents()
+    }
+    
     // 監聽年月變化，重新加載事件
     watch([() => filters.value.year, () => filters.value.month], async () => {
+      console.log("年月變化，重新載入事件")
       await loadEvents()
     })
     
@@ -443,10 +467,23 @@ export default {
     const loadEvents = async () => {
       isLoading.value = true
       try {
-        // 設置日期為當前月份
-        calendarStore.setCurrentDate(new Date())
-        await calendarStore.fetchMonthEvents()
+        // 設置日期為所選年月
+        calendarStore.setCurrentDate(new Date(filters.value.year, filters.value.month - 1, 1))
+        
+        console.log("載入事件，顯示模式：", showAllEvents.value ? "全部事件" : "僅所選年月")
+        
+        // 根據是否顯示全部事件選擇API調用
+        if (showAllEvents.value) {
+          // 獲取全部事件
+          console.log("正在獲取全部事件...")
+          await calendarStore.fetchAllEvents()
+        } else {
+          // 獲取所選年月的事件
+          console.log("正在獲取所選年月事件...")
+          await calendarStore.fetchMonthEvents()
+        }
       } catch (error) {
+        console.error("事件載入錯誤：", error)
         toast.add({
           severity: 'error',
           summary: '錯誤',
@@ -466,16 +503,6 @@ export default {
         securityLevel: null,
         searchText: ''
       }
-      loadEvents()
-    }
-    
-    // 應用篩選
-    const applyFilters = () => {
-      // 關鍵字搜尋不需要重新加載數據
-      if (filters.value.searchText || filters.value.securityLevel) {
-        return
-      }
-      
       loadEvents()
     }
     
@@ -786,7 +813,9 @@ export default {
       formatDateTime,
       formatEventDateTime,
       getSecurityLevelName,
-      isLoading
+      isLoading,
+      showAllEvents,
+      toggleShowAllEvents
     }
   }
 }

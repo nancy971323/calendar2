@@ -1,30 +1,52 @@
 package com.company.calendar.service.home;
 
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 首頁服務介面
+ * 首頁服務類
  * <p>
- * 定義處理系統基本信息和健康檢查的服務介面。
+ * 提供系統基本信息和健康檢查功能的具體實現。
  * </p>
  * 
  * @author YourName
  * @version 1.0
  * @since 2025-03-24
  */
-public interface HomeService {
-    
+@Service
+public class HomeService {
+
     /**
      * 獲取系統基本信息
      * 
      * @return 系統信息的Map
      */
-    Map<String, Object> getSystemInfo();
-    
+    public Map<String, Object> getSystemInfo() {
+        Map<String, Object> info = new HashMap<>();
+        info.put("name", "企業行事曆系統");
+        info.put("version", "1.0.0");
+        info.put("description", "基於Spring Boot和Vue的企業行事曆系統，支持多級權限控制");
+        
+        Map<String, String> contact = new HashMap<>();
+        contact.put("name", "系統管理員");
+        contact.put("email", "admin@example.com");
+        info.put("contact", contact);
+        
+        return info;
+    }
+
     /**
      * 系統健康檢查
      * 
      * @return 健康狀態的Map
      */
-    Map<String, Object> checkHealth();
+    public Map<String, Object> checkHealth() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("timestamp", System.currentTimeMillis());
+        
+        return health;
+    }
 } 

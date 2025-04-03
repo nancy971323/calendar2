@@ -1,11 +1,13 @@
 package com.company.calendar.config;
 
 import com.company.calendar.repository.EmployeeRepository;
+import com.company.calendar.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -44,25 +46,22 @@ public class SecurityConfig {
      * 員工資料庫操作介面
      */
     private final EmployeeRepository employeeRepository;
+
+    /**
+     * JWT認證過濾器
+     */
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
     /**
      * 構造函數
      * 
      * @param employeeRepository 員工資料庫操作介面
+     * @param jwtAuthenticationFilter JWT認證過濾器
      */
     @Autowired
-    public SecurityConfig(EmployeeRepository employeeRepository) {
+    public SecurityConfig(EmployeeRepository employeeRepository, JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.employeeRepository = employeeRepository;
-    }
-    
-    /**
-     * 創建密碼編碼器Bean
-     * 
-     * @return 密碼編碼器，使用BCrypt算法
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
     
     /**
@@ -86,10 +85,10 @@ public class SecurityConfig {
      * @return 認證提供者
      */
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService());
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
     
@@ -129,12 +128,11 @@ public class SecurityConfig {
      * 配置安全過濾鏈
      * 
      * @param http HTTP安全配置
-     * @param jwtAuthenticationFilter JWT認證過濾器
      * @return 安全過濾鏈
      * @throws Exception 如果配置失敗
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, DaoAuthenticationProvider authenticationProvider) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -153,9 +151,10 @@ public class SecurityConfig {
                 .requestMatchers("/home").permitAll()
                 .requestMatchers("/assets/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .authenticationProvider(authenticationProvider())
+            .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();

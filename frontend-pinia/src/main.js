@@ -28,6 +28,7 @@ import ToastService from 'primevue/toastservice'  // Toast提示服務
 import ConfirmDialog from 'primevue/confirmdialog' // 確認對話框組件
 import ConfirmationService from 'primevue/confirmationservice' // 確認服務
 import MultiSelect from 'primevue/multiselect'    // 多選下拉選單組件
+import ToggleButton from 'primevue/togglebutton'  // 切換按鈕組件
 
 // ==================== PrimeVue 樣式文件導入 ====================
 import 'primevue/resources/themes/saga-blue/theme.css' // PrimeVue主題樣式 - saga-blue
@@ -64,6 +65,7 @@ app.component('Message', Message)                 // 註冊消息組件
 app.component('Toast', Toast)                     // 註冊Toast提示組件
 app.component('ConfirmDialog', ConfirmDialog)     // 註冊確認對話框組件
 app.component('MultiSelect', MultiSelect)         // 註冊多選下拉選單組件
+app.component('ToggleButton', ToggleButton)       // 註冊切換按鈕組件
 
 // ==================== 全局導航守衛設置 ====================
 // 在每次路由跳轉前執行的檢查邏輯

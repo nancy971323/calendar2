@@ -72,11 +72,13 @@ export default {
     
     // 加載今日事件
     const loadTodayEvents = async () => {
-      try {
-        calendarStore.setCurrentDate(new Date())
-        await calendarStore.fetchMonthEvents()
-      } catch (error) {
-        console.error('無法加載今日事件:', error)
+      if (isLoggedIn.value) {
+        try {
+          calendarStore.setCurrentDate(new Date())
+          await calendarStore.fetchMonthEvents()
+        } catch (error) {
+          console.error('無法加載今日事件:', error)
+        }
       }
     }
     
@@ -122,6 +124,10 @@ export default {
   width: 100%;
   max-width: 1000px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-card :deep(.p-card-title) {
+  text-align: center;
 }
 
 .welcome-content {

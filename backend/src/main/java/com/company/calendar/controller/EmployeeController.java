@@ -1,7 +1,7 @@
 package com.company.calendar.controller;
 
-import com.company.calendar.dto.EmployeeDTO;
 import com.company.calendar.enums.SecurityLevel;
+import com.company.calendar.model.Employee;
 import com.company.calendar.service.employee.EmployeeService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +48,8 @@ public class EmployeeController {
      * @return 所有員工的列表
      */
     @GetMapping
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        List<EmployeeDTO> employees = employeeService.getAllEmployees();
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        List<Employee> employees = employeeService.getAllEmployees();
         return ResponseEntity.ok(employees);
     }
     
@@ -59,8 +59,8 @@ public class EmployeeController {
      * @return 所有活躍員工的列表
      */
     @GetMapping("/active")
-    public ResponseEntity<List<EmployeeDTO>> getAllActiveEmployees() {
-        List<EmployeeDTO> employees = employeeService.getAllActiveEmployees();
+    public ResponseEntity<List<Employee>> getAllActiveEmployees() {
+        List<Employee> employees = employeeService.getAllActiveEmployees();
         return ResponseEntity.ok(employees);
     }
     
@@ -72,7 +72,7 @@ public class EmployeeController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getEmployeeById(@PathVariable Long id) {
-        EmployeeDTO employee = employeeService.getEmployeeById(id);
+        Employee employee = employeeService.getEmployeeById(id);
         
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("員工不存在");
@@ -89,7 +89,7 @@ public class EmployeeController {
      */
     @GetMapping("/username/{username}")
     public ResponseEntity<?> getEmployeeByUsername(@PathVariable String username) {
-        EmployeeDTO employee = employeeService.getEmployeeByUsername(username);
+        Employee employee = employeeService.getEmployeeByUsername(username);
         
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("員工不存在");
@@ -101,26 +101,13 @@ public class EmployeeController {
     /**
      * 創建新員工
      * 
-     * @param request 包含員工信息和密碼的請求
+     * @param employee 員工信息
      * @return 創建的員工信息
      */
     @PostMapping
-    public ResponseEntity<?> createEmployee(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> createEmployee(@RequestBody Employee employee) {
         try {
-            EmployeeDTO employeeDTO = new EmployeeDTO();
-            
-            employeeDTO.setUsername((String) request.get("username"));
-            employeeDTO.setFullName((String) request.get("fullName"));
-            employeeDTO.setEmail((String) request.get("email"));
-            employeeDTO.setDepartment((String) request.get("department"));
-            
-            String securityLevelStr = (String) request.get("securityLevel");
-            SecurityLevel securityLevel = SecurityLevel.valueOf(securityLevelStr);
-            employeeDTO.setSecurityLevel(securityLevel);
-            
-            String password = (String) request.get("password");
-            
-            EmployeeDTO createdEmployee = employeeService.createEmployee(employeeDTO, password);
+            Employee createdEmployee = employeeService.createEmployee(employee);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -131,13 +118,17 @@ public class EmployeeController {
      * 更新員工信息
      * 
      * @param id 員工ID
-     * @param employeeDTO 員工資料傳輸物件
+     * @param employee 員工信息
      * @return 更新後的員工信息
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
+        if (!id.equals(employee.getId())) {
+            return ResponseEntity.badRequest().body("ID不匹配");
+        }
+        
         try {
-            EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
+            Employee updatedEmployee = employeeService.updateEmployee(employee);
             return ResponseEntity.ok(updatedEmployee);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -145,41 +136,70 @@ public class EmployeeController {
     }
     
     /**
-     * 更新員工密碼
+     * 修改員工密碼
      * 
      * @param id 員工ID
-     * @param request 包含新密碼的請求
-     * @return 更新結果
+     * @param passwordMap 新舊密碼
+     * @return 操作結果
      */
     @PutMapping("/{id}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String newPassword = request.get("password");
+    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> passwordMap) {
+        String oldPassword = passwordMap.get("oldPassword");
+        String newPassword = passwordMap.get("newPassword");
         
-        if (newPassword == null || newPassword.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("密碼不能為空");
+        if (oldPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest().body("缺少必要參數");
         }
         
-        boolean success = employeeService.updatePassword(id, newPassword);
+        try {
+            boolean success = employeeService.changePassword(id, oldPassword, newPassword);
+            
+            if (success) {
+                return ResponseEntity.ok().body("密碼修改成功");
+            } else {
+                return ResponseEntity.badRequest().body("原密碼錯誤");
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    /**
+     * 啟用或禁用員工
+     * 
+     * @param id 員工ID
+     * @param activeMap 狀態信息
+     * @return 操作結果
+     */
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> setEmployeeStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> activeMap) {
+        Boolean active = activeMap.get("active");
         
-        if (success) {
-            return ResponseEntity.ok().body("密碼更新成功");
-        } else {
+        if (active == null) {
+            return ResponseEntity.badRequest().body("缺少必要參數");
+        }
+        
+        Employee employee = employeeService.setEmployeeStatus(id, active);
+        
+        if (employee == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("員工不存在");
         }
+        
+        return ResponseEntity.ok(employee);
     }
     
     /**
      * 刪除員工
      * 
      * @param id 員工ID
-     * @return 刪除結果
+     * @return 操作結果
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
-        boolean success = employeeService.deleteEmployee(id);
+        boolean deleted = employeeService.deleteEmployee(id);
         
-        if (success) {
-            return ResponseEntity.ok().body("員工刪除成功");
+        if (deleted) {
+            return ResponseEntity.ok().body("員工已刪除");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("員工不存在");
         }
@@ -192,8 +212,8 @@ public class EmployeeController {
      * @return 指定部門的員工列表
      */
     @GetMapping("/department/{department}")
-    public ResponseEntity<List<EmployeeDTO>> getEmployeesByDepartment(@PathVariable String department) {
-        List<EmployeeDTO> employees = employeeService.getEmployeesByDepartment(department);
+    public ResponseEntity<List<Employee>> getEmployeesByDepartment(@PathVariable String department) {
+        List<Employee> employees = employeeService.getEmployeesByDepartment(department);
         return ResponseEntity.ok(employees);
     }
     
@@ -204,50 +224,37 @@ public class EmployeeController {
      * @return 指定安全等級的員工列表
      */
     @GetMapping("/security-level/{level}")
-    public ResponseEntity<?> getEmployeesBySecurityLevel(@PathVariable String level) {
-        try {
-            SecurityLevel securityLevel = SecurityLevel.valueOf(level);
-            List<EmployeeDTO> employees = employeeService.getEmployeesBySecurityLevel(securityLevel);
-            return ResponseEntity.ok(employees);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("無效的安全等級: " + level);
-        }
+    public ResponseEntity<List<Employee>> getEmployeesBySecurityLevel(@PathVariable SecurityLevel level) {
+        List<Employee> employees = employeeService.getEmployeesBySecurityLevel(level);
+        return ResponseEntity.ok(employees);
     }
     
     /**
-     * 獲取安全等級低於指定等級的員工
+     * 獲取低於指定安全等級的員工
      * 
      * @param level 安全等級
-     * @return 安全等級低於指定等級的員工列表
+     * @return 低於指定安全等級的員工列表
      */
-    @GetMapping("/lower-security-level/{level}")
-    public ResponseEntity<?> getEmployeesWithLowerSecurityLevel(@PathVariable String level) {
-        try {
-            SecurityLevel securityLevel = SecurityLevel.valueOf(level);
-            List<EmployeeDTO> employees = employeeService.getEmployeesWithLowerSecurityLevel(securityLevel);
-            return ResponseEntity.ok(employees);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("無效的安全等級: " + level);
-        }
+    @GetMapping("/security-level/lower-than/{level}")
+    public ResponseEntity<List<Employee>> getEmployeesWithLowerSecurityLevel(@PathVariable SecurityLevel level) {
+        List<Employee> employees = employeeService.getEmployeesWithLowerSecurityLevel(level);
+        return ResponseEntity.ok(employees);
     }
     
     /**
-     * 獲取所有安全等級枚舉值
+     * 獲取所有安全等級
      * 
-     * @return 安全等級枚舉值列表
+     * @return 所有安全等級列表
      */
     @GetMapping("/security-levels")
-    public ResponseEntity<Map<String, Object>> getSecurityLevels() {
+    public ResponseEntity<Map<String, Object>> getAllSecurityLevels() {
         Map<String, Object> response = new HashMap<>();
-        
         for (SecurityLevel level : SecurityLevel.values()) {
             Map<String, Object> levelInfo = new HashMap<>();
             levelInfo.put("level", level.getLevel());
             levelInfo.put("description", level.getDescription());
-            
             response.put(level.name(), levelInfo);
         }
-        
         return ResponseEntity.ok(response);
     }
 }

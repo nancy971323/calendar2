@@ -1,5 +1,6 @@
 package com.company.calendar.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -28,6 +29,7 @@ public class EventViewPermission {
     /**
      * 關聯的事件
      */
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
@@ -35,6 +37,7 @@ public class EventViewPermission {
     /**
      * 被授予權限的員工
      */
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;

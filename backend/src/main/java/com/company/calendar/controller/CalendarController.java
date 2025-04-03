@@ -1,6 +1,7 @@
 package com.company.calendar.controller;
 
-import com.company.calendar.dto.EventDTO;
+import com.company.calendar.model.Event;
+import com.company.calendar.model.Employee;
 import com.company.calendar.service.auth.AuthService;
 import com.company.calendar.service.calendar.CalendarService;
 
@@ -11,14 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * 行事曆控制器
  * <p>
- * 處理行事曆事件相關的HTTP請求，包括事件的CRUD操作和權限管理功能。
+ * 處理行事曆相關的HTTP請求，包括事件的CRUD操作和事件權限管理。
  * </p>
  * 
  * @author YourName
@@ -57,8 +58,8 @@ public class CalendarController {
      * @return 所有事件的列表
      */
     @GetMapping("/events")
-    public ResponseEntity<List<EventDTO>> getAllEvents() {
-        List<EventDTO> events = calendarService.getAllEvents();
+    public ResponseEntity<List<Event>> getAllEvents() {
+        List<Event> events = calendarService.getAllEvents();
         return ResponseEntity.ok(events);
     }
     
@@ -70,7 +71,7 @@ public class CalendarController {
      */
     @GetMapping("/events/{id}")
     public ResponseEntity<?> getEventById(@PathVariable Long id) {
-        EventDTO event = calendarService.getEventById(id);
+        Event event = calendarService.getEventById(id);
         
         if (event == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
@@ -82,14 +83,15 @@ public class CalendarController {
     /**
      * 創建新事件
      * 
-     * @param eventDTO 事件資料傳輸物件
+     * @param event 事件信息
      * @return 創建的事件信息
      */
     @PostMapping("/events")
-    public ResponseEntity<?> createEvent(@RequestBody EventDTO eventDTO) {
+    public ResponseEntity<?> createEvent(@RequestBody Event event) {
         try {
-            Long creatorId = authService.getCurrentEmployee().getId();
-            EventDTO createdEvent = calendarService.createEvent(eventDTO, creatorId);
+            Employee creator = authService.getCurrentEmployee();
+            event.setCreator(creator);
+            Event createdEvent = calendarService.createEvent(event);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -100,13 +102,32 @@ public class CalendarController {
      * 更新事件信息
      * 
      * @param id 事件ID
-     * @param eventDTO 事件資料傳輸物件
+     * @param event 事件信息
      * @return 更新後的事件信息
      */
     @PutMapping("/events/{id}")
-    public ResponseEntity<?> updateEvent(@PathVariable Long id, @RequestBody EventDTO eventDTO) {
+    public ResponseEntity<?> updateEvent(@PathVariable Long id, @RequestBody Event event) {
+        if (!id.equals(event.getId())) {
+            return ResponseEntity.badRequest().body("ID不匹配");
+        }
+        
         try {
-            EventDTO updatedEvent = calendarService.updateEvent(id, eventDTO);
+            // 檢查當前用戶是否是事件創建者
+            Employee currentEmployee = authService.getCurrentEmployee();
+            Event existingEvent = calendarService.getEventById(id);
+            
+            if (existingEvent == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
+            }
+            
+            if (!existingEvent.getCreator().getId().equals(currentEmployee.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("只有事件創建者可以更新事件");
+            }
+            
+            // 保持原創建者不變
+            event.setCreator(existingEvent.getCreator());
+            
+            Event updatedEvent = calendarService.updateEvent(event);
             return ResponseEntity.ok(updatedEvent);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -117,165 +138,212 @@ public class CalendarController {
      * 刪除事件
      * 
      * @param id 事件ID
-     * @return 刪除結果
+     * @return 操作結果
      */
     @DeleteMapping("/events/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
-        boolean success = calendarService.deleteEvent(id);
+        // 檢查當前用戶是否是事件創建者
+        Employee currentEmployee = authService.getCurrentEmployee();
+        Event existingEvent = calendarService.getEventById(id);
         
-        if (success) {
-            return ResponseEntity.ok().body("事件刪除成功");
+        if (existingEvent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
+        }
+        
+        if (!existingEvent.getCreator().getId().equals(currentEmployee.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("只有事件創建者可以刪除事件");
+        }
+        
+        boolean deleted = calendarService.deleteEvent(id);
+        
+        if (deleted) {
+            return ResponseEntity.ok("事件已刪除");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
         }
     }
     
     /**
-     * 獲取指定時間區間內的事件
+     * 根據時間範圍獲取事件
      * 
      * @param start 開始時間
      * @param end 結束時間
-     * @return 時間區間內的事件列表
+     * @return 時間範圍內的事件列表
      */
-    @GetMapping("/events/between")
-    public ResponseEntity<List<EventDTO>> getEventsBetween(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        List<EventDTO> events = calendarService.getEventsBetween(start, end);
+    @GetMapping("/events/range")
+    public ResponseEntity<List<Event>> getEventsByTimeRange(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        List<Event> events = calendarService.getEventsByTimeRange(start, end);
         return ResponseEntity.ok(events);
     }
     
     /**
-     * 獲取指定年月的事件
+     * 獲取當前員工可見的所有事件
      * 
-     * @param year 年份
-     * @param month 月份（1-12）
-     * @return 指定年月的事件列表
+     * @return 當前員工可見的事件列表
      */
-    @GetMapping("/events/year/{year}/month/{month}")
-    public ResponseEntity<List<EventDTO>> getEventsByYearAndMonth(
-            @PathVariable int year, @PathVariable int month) {
-        // 驗證月份範圍
-        if (month < 1 || month > 12) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        
-        List<EventDTO> events = calendarService.getEventsByYearAndMonth(year, month);
+    @GetMapping("/events/visible")
+    public ResponseEntity<List<Event>> getVisibleEvents() {
+        Employee currentEmployee = authService.getCurrentEmployee();
+        List<Event> events = calendarService.getEventsVisibleToEmployee(currentEmployee.getId());
         return ResponseEntity.ok(events);
     }
     
     /**
-     * 獲取當前登入員工有權限查看的當月事件
+     * 獲取當前員工可見的時間範圍內的事件
+     * 
+     * @param start 開始時間
+     * @param end 結束時間
+     * @return 當前員工可見的時間範圍內的事件列表
+     */
+    @GetMapping("/events/visible/range")
+    public ResponseEntity<List<Event>> getVisibleEventsByTimeRange(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        Employee currentEmployee = authService.getCurrentEmployee();
+        List<Event> events = calendarService.getEventsVisibleToEmployeeInTimeRange(
+                currentEmployee.getId(), start, end);
+        return ResponseEntity.ok(events);
+    }
+    
+    /**
+     * 獲取當前員工指定年月可見的事件
      * 
      * @param year 年份
      * @param month 月份（1-12）
-     * @return 員工有權限查看的事件列表
+     * @return 當前員工指定年月可見的事件列表
      */
     @GetMapping("/events/visible/year/{year}/month/{month}")
-    public ResponseEntity<?> getVisibleEventsForCurrentEmployee(
-            @PathVariable int year, @PathVariable int month) {
-        // 驗證月份範圍
-        if (month < 1 || month > 12) {
-            return ResponseEntity.badRequest().body("無效的月份");
+    public ResponseEntity<List<Event>> getVisibleEventsByYearMonth(
+            @PathVariable int year, 
+            @PathVariable int month) {
+        Employee currentEmployee = authService.getCurrentEmployee();
+        if (currentEmployee == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
         
-        // 獲取當前員工ID
-        Long employeeId = authService.getCurrentEmployee().getId();
+        // 構建該月份的開始和結束時間
+        LocalDateTime startOfMonth = LocalDateTime.of(year, month, 1, 0, 0, 0);
+        LocalDateTime endOfMonth = startOfMonth.plusMonths(1).minusSeconds(1);
         
-        // 計算開始和結束時間
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
-        
-        List<EventDTO> events = calendarService.getVisibleEventsForEmployee(employeeId, start, end);
+        List<Event> events = calendarService.getEventsVisibleToEmployeeInTimeRange(
+                currentEmployee.getId(), startOfMonth, endOfMonth);
         return ResponseEntity.ok(events);
     }
     
     /**
-     * 獲取當前登入員工創建的事件
+     * 獲取當前員工創建的所有事件
      * 
-     * @return 創建者創建的事件列表
+     * @return 當前員工創建的事件列表
      */
-    @GetMapping("/events/my")
-    public ResponseEntity<?> getMyEvents() {
-        Long employeeId = authService.getCurrentEmployee().getId();
-        List<EventDTO> events = calendarService.getEventsByCreator(employeeId);
+    @GetMapping("/events/created")
+    public ResponseEntity<List<Event>> getCreatedEvents() {
+        Employee currentEmployee = authService.getCurrentEmployee();
+        List<Event> events = calendarService.getEventsByCreator(currentEmployee.getId());
         return ResponseEntity.ok(events);
     }
     
     /**
-     * 搜索事件
-     * 
-     * @param keyword 關鍵字
-     * @return 匹配的事件列表
-     */
-    @GetMapping("/events/search")
-    public ResponseEntity<List<EventDTO>> searchEvents(@RequestParam String keyword) {
-        List<EventDTO> events = calendarService.searchEvents(keyword);
-        return ResponseEntity.ok(events);
-    }
-    
-    /**
-     * 添加事件查看權限
+     * 為事件添加特殊查看權限
      * 
      * @param eventId 事件ID
-     * @param employeeId 員工ID
-     * @return 添加結果
+     * @param request 包含員工ID的請求
+     * @return 操作結果
      */
-    @PostMapping("/events/{eventId}/permissions/{employeeId}")
+    @PostMapping("/events/{eventId}/permissions")
     public ResponseEntity<?> addViewPermission(
-            @PathVariable Long eventId, @PathVariable Long employeeId) {
-        boolean success = calendarService.addViewPermission(eventId, employeeId);
+            @PathVariable Long eventId,
+            @RequestBody Map<String, Long> request) {
+        Long employeeId = request.get("employeeId");
         
-        if (success) {
-            return ResponseEntity.ok().body("權限添加成功");
+        if (employeeId == null) {
+            return ResponseEntity.badRequest().body("缺少必要參數");
+        }
+        
+        // 檢查當前用戶是否是事件創建者
+        Employee currentEmployee = authService.getCurrentEmployee();
+        Event existingEvent = calendarService.getEventById(eventId);
+        
+        if (existingEvent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
+        }
+        
+        if (!existingEvent.getCreator().getId().equals(currentEmployee.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("只有事件創建者可以管理權限");
+        }
+        
+        boolean added = calendarService.addViewPermission(eventId, employeeId);
+        
+        if (added) {
+            return ResponseEntity.ok("已添加查看權限");
         } else {
-            return ResponseEntity.badRequest().body("權限添加失敗");
+            return ResponseEntity.badRequest().body("添加查看權限失敗");
         }
     }
     
     /**
-     * 移除事件查看權限
+     * 移除事件的特殊查看權限
      * 
      * @param eventId 事件ID
      * @param employeeId 員工ID
-     * @return 移除結果
+     * @return 操作結果
      */
     @DeleteMapping("/events/{eventId}/permissions/{employeeId}")
     public ResponseEntity<?> removeViewPermission(
-            @PathVariable Long eventId, @PathVariable Long employeeId) {
-        boolean success = calendarService.removeViewPermission(eventId, employeeId);
+            @PathVariable Long eventId,
+            @PathVariable Long employeeId) {
+        // 檢查當前用戶是否是事件創建者
+        Employee currentEmployee = authService.getCurrentEmployee();
+        Event existingEvent = calendarService.getEventById(eventId);
         
-        if (success) {
-            return ResponseEntity.ok().body("權限移除成功");
+        if (existingEvent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
+        }
+        
+        if (!existingEvent.getCreator().getId().equals(currentEmployee.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("只有事件創建者可以管理權限");
+        }
+        
+        boolean removed = calendarService.removeViewPermission(eventId, employeeId);
+        
+        if (removed) {
+            return ResponseEntity.ok("已移除查看權限");
         } else {
-            return ResponseEntity.badRequest().body("權限移除失敗");
+            return ResponseEntity.badRequest().body("移除查看權限失敗");
         }
     }
     
     /**
-     * 獲取事件的特殊查看權限員工列表
+     * 獲取有特殊查看權限的員工ID列表
      * 
      * @param eventId 事件ID
      * @return 有特殊查看權限的員工ID集合
      */
     @GetMapping("/events/{eventId}/permissions")
-    public ResponseEntity<Set<Long>> getSpecialViewerIds(@PathVariable Long eventId) {
+    public ResponseEntity<?> getSpecialViewers(@PathVariable Long eventId) {
+        // 檢查事件是否存在
+        Event existingEvent = calendarService.getEventById(eventId);
+        
+        if (existingEvent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("事件不存在");
+        }
+        
         Set<Long> viewerIds = calendarService.getSpecialViewerIds(eventId);
         return ResponseEntity.ok(viewerIds);
     }
     
     /**
-     * 檢查員工是否有權限查看事件
+     * 檢查當前員工是否可以查看特定事件
      * 
      * @param eventId 事件ID
-     * @return 是否有權限查看
+     * @return 是否可以查看
      */
     @GetMapping("/events/{eventId}/can-view")
     public ResponseEntity<?> canCurrentEmployeeViewEvent(@PathVariable Long eventId) {
-        Long employeeId = authService.getCurrentEmployee().getId();
-        boolean canView = calendarService.canEmployeeViewEvent(eventId, employeeId);
+        Employee currentEmployee = authService.getCurrentEmployee();
+        boolean canView = calendarService.canEmployeeViewEvent(eventId, currentEmployee.getId());
         
-        return ResponseEntity.ok().body(canView);
+        return ResponseEntity.ok(canView);
     }
 }

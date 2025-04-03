@@ -1,6 +1,8 @@
 package com.company.calendar.model;
 
 import com.company.calendar.enums.SecurityLevel;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -62,6 +64,7 @@ public class Event {
     /**
      * L事件創建者
      */
+    @JsonBackReference("employee-events")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
     private Employee creator;
@@ -76,6 +79,7 @@ public class Event {
     /**
      * 特殊權限設定，允許低權限員工查看此事件
      */
+    @JsonIgnore
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<EventViewPermission> viewPermissions = new HashSet<>();
 

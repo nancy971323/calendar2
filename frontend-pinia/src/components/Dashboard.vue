@@ -25,7 +25,7 @@
                 </template>
                 <template #content>
                   <div class="stats-value">{{ eventsCount }}</div>
-                  <div class="stats-label">本月事件</div>
+                  <div class="stats-label">本月事件數量</div>
                 </template>
               </Card>
               

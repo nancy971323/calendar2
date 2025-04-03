@@ -1,7 +1,6 @@
 package com.company.calendar.controller;
 
-import com.company.calendar.dto.EmployeeDTO;
-import com.company.calendar.dto.LoginDTO;
+import com.company.calendar.model.Employee;
 import com.company.calendar.service.auth.AuthService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +43,19 @@ public class AuthController {
     /**
      * 處理登入請求
      * 
-     * @param loginDTO 登入資料傳輸物件
+     * @param loginRequest 包含用戶名和密碼的Map
      * @return 登入結果，包含用戶信息和JWT令牌
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-        EmployeeDTO employee = authService.login(loginDTO);
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+        String username = loginRequest.get("username");
+        String password = loginRequest.get("password");
+        
+        if (username == null || password == null) {
+            return ResponseEntity.badRequest().body("用戶名和密碼不能為空");
+        }
+        
+        Employee employee = authService.login(username, password);
         
         if (employee == null) {
             return ResponseEntity.badRequest().body("用戶名或密碼錯誤");
@@ -73,39 +79,34 @@ public class AuthController {
      * @return 登出結果
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<String> logout() {
         authService.logout();
-        return ResponseEntity.ok().body("登出成功");
+        return ResponseEntity.ok("已成功登出");
     }
     
     /**
-     * 獲取當前登入用戶信息
+     * 獲取當前登入的員工信息
      * 
-     * @return 當前用戶信息
+     * @return 當前員工信息
      */
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser() {
-        EmployeeDTO employee = authService.getCurrentEmployee();
+    @GetMapping("/current")
+    public ResponseEntity<?> getCurrentEmployee() {
+        Employee employee = authService.getCurrentEmployee();
         
         if (employee == null) {
             return ResponseEntity.status(401).body("未登入");
         }
         
-        return ResponseEntity.ok().body(employee);
+        return ResponseEntity.ok(employee);
     }
     
     /**
-     * 檢查用戶是否已登入
+     * 檢查用戶是否已認證
      * 
-     * @return 登入狀態
+     * @return 是否已認證
      */
     @GetMapping("/check")
-    public ResponseEntity<?> checkAuthentication() {
-        boolean isAuthenticated = authService.isAuthenticated();
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("authenticated", isAuthenticated);
-        
-        return ResponseEntity.ok().body(response);
+    public ResponseEntity<Boolean> isAuthenticated() {
+        return ResponseEntity.ok(authService.isAuthenticated());
     }
 }

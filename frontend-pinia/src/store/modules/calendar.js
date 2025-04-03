@@ -99,6 +99,20 @@ export const useCalendarStore = defineStore('calendar', {
       }
     },
     
+    // 獲取所有事件
+    async fetchAllEvents() {
+      try {
+        console.log('正在獲取所有事件')
+        const response = await api.get('/api/calendar/events/visible')
+        console.log('API回應:', response.data)
+        this.setEvents(response.data)
+        return response.data
+      } catch (error) {
+        console.error('獲取所有事件失敗:', error)
+        throw error
+      }
+    },
+    
     // 獲取事件詳情
     async fetchEvent(id) {
       try {
